@@ -1,0 +1,359 @@
+Matrizes para criaчуo de 3 tipos de inimigos, uma nave e vidas, respectivamente:
+Уinimigo01.txtФ
+-1 -1  4  4  4 -1 -1
+-1 -1  0  4  0 -1 -1
+-1 -1  4  4  4 -1 -1
+-1  4 -1  4 -1  4 -1
+-1  4 -1  4 -1  4 -1
+ 4 -1 -1 -1 -1 -1  4
+-1 -1 -1 -1 -1 -1 -1
+Уinimigo02.txtФ
+-1 -1 -1 -1 -1 -1 -1
+-1 -1  4  4  4 -1 -1
+-1 -1  0  4  0 -1 -1 
+-1 -1  4  4  4 -1 -1
+-1  4  4  4  4  4 -1
+-1  4 -1 -1 -1  4 -1
+ 4 -1  4 -1  4 -1  4
+Уinimigo03.txtФ
+-1 -1 -1 -1 -1 -1 -1
+-1 -1  4  4  4 -1 -1
+ 4 -1  0  4  0 -1  4
+ 4  4  4  4  4  4  4
+-1 -1  4 -1  4 -1 -1
+-1  4 -1  4 -1  4 -1
+-1 -1 -1 -1 -1 -1 -1
+УMatrizExemplo0.txt
+-1  4  4 -1  4  4 -1 
+ 4  4  4  4  4  4  4 
+ 4  4  4  4  4  4  4 
+-1  4  4  4  4  4 -1 
+-1 -1  4  4  4 -1 -1   
+-1 -1 -1  4 -1 -1 -1
+Уheart.txtФ
+-1 -1 -1  10 -1 -1 -1 
+-1 -1 -1  10 -1 -1 -1 
+-1 -1  10  0  10 -1 -1 
+-1 -1  10  2  10 -1 -1 
+-1  10  10  10  10  10 -1   
+-1  10 -1  10 -1  10 -1
+УTransformacoesGeometricas.pyФ
+Variсveis globais criadas:
+tiros_disparados = 0
+tempo_inicio = time.time()
+limite_tiros = 10
+intervalo = 2 
+vidas = 3
+intervaloCriacao= 2
+proximo_tiro_inimigo = time.time() + 2 
+intervalo_tiro_inimigo = 4
+
+Todos os modelos das matrizes sуo criados aqui:
+а а Modelos.append(ModeloMatricial())
+а а Modelos[0].leModelo("MatrizExemplo0.txt");
+а а Modelos.append(ModeloMatricial())
+а а Modelos[1].leModelo("MatrizProjetil.txt");
+а а Modelos.append(ModeloMatricial())
+а а Modelos[2].leModelo("inimigo02.txt");
+а а Modelos.append(ModeloMatricial())
+а а Modelos[3].leModelo("inimigo01.txt");
+а а Modelos.append(ModeloMatricial())
+а а Modelos[4].leModelo("inimigo03.txt");
+а а Modelos.append(ModeloMatricial())
+а а Modelos[5].leModelo("heart.txt")
+
+Adicionado a possibilidade de acelerar e desacelerar com as setas:
+def arrow_keys(a_keys: int, x: int, y: int):
+а а if a_keys == GLUT_KEY_UP: а а а а # Se pressionar UP
+а а а а Personagens[0].Velocidade=6
+if a_keys == GLUT_KEY_DOWN: а а а # Se pressionar DOWN
+а а а а Personagens[0].Velocidade=2
+ Em display sуo adicionadas as linhas:
+def display():
+criacaoDeInimigos()
+а а inimigosAtiram()
+а а DesenhaCoracao()
+Para verificar impactos e atualizar os personagens foi adicionado em AtualizaPersonagens:
+def AtualizaPersonagens(tempoDecorrido):
+а а if getattr(Personagens[i], "tipo", None) == "inimigo":
+а а а а а а VerificaColisaoComLimites(Personagens[i])
+
+Para desenhar as vidas restantes do personagem foi adicionado o seguinte mщtodo:
+def DesenhaCoracao():
+а а global vidas
+а а if vidas <= 0:
+а а а а return
+
+а а glPushMatrix()
+а а glLoadIdentity() а# desenha sempre em coordenadas fixas
+
+а а # posiчуo inicial (canto superior esquerdo)
+а а margem_x = Min.x + 2
+а а topo_y = Max.y - 8 а# 6 de altura + 2 de margem
+
+а а for i in range(vidas):
+а а а а glPushMatrix()
+а а а а glTranslatef(margem_x + i * 8, topo_y, 0) а# cada coraчуo tem 7 de largura + 1 espaчo
+а а а а DesenhaModelo(5) а# эndice do coraчуo no Modelos
+а а а а glPopMatrix()
+
+а а glPopMatrix()
+
+A partir de УDesenhaPersonagemMatricial.pyФ foi criado para poder executa-lo de outra forma o УDesenhaModeloФ
+def DesenhaModelo(idx):
+а а MM = Modelos[idx]
+а а larg = MM.nColunas
+а а alt = MM.nLinhas
+
+а а glPushMatrix()
+а а for i in range(alt):
+а а а а glPushMatrix()
+а а а а for j in range(larg):
+а а а а а а cor = MM.getColor(alt - 1 - i, j)
+а а а а а а if cor != -1:
+а а а а а а а а SetColor(cor)
+а а а а а а а а DesenhaCelula()
+а а а а а а а а SetColor(Wheat)
+а а а а а а а а DesenhaBorda()
+а а а а а а glTranslatef(1, 0, 0)
+а а а а glPopMatrix()
+а а а а glTranslatef(0, 1, 0)
+а а glPopMatrix()
+
+Usado por exemplo para criar o coraчуo das vidas
+
+O mщtodo atualiza jogo ficou desta forma:
+def AtualizaJogo():
+а а global imprimeEnvelope, nInstancias, Personagens, vidas
+
+а а # Atualiza envelopes de colisуo de todos os personagens
+а а for i in range(0, nInstancias):
+а а а а AtualizaEnvelope(i)
+а а а а if imprimeEnvelope:
+а а а а а а #print("Envelope ", i)
+а а а а а а Personagens[i].ImprimeEnvelope("", "")
+а а imprimeEnvelope = False
+
+а а # Verifica colisao do jogador com inimigos ou tiros
+а а for i in range(1, nInstancias):
+а а а а personagem = Personagens[i]
+
+а а а а # Ignora com o do jogador
+а а а а if getattr(personagem, "tipo", None) == "tiro" and getattr(personagem, "atirador", None) == 0:
+а а а а а а continue
+
+а а а а if TestaColisao(0, i): а# jogador щ o эndice 0
+а а а а а а #print(f"Colisуo com personagem {i} do tipo {personagem.tipo}")
+а а а а а а vidas -= 1
+а а а а а а #print(f"Vidas restantes: {vidas}")
+
+а а а а а а if vidas <= 0:
+а а а а а а а а print("FIM DE JOGO")
+а а а а а а а а keyboard(ESCAPE, 0, 0) а# Fim
+
+а а а а а а # Reposiciona o personagem dps da colisуo
+а а а а а а Personagens[i] = copy.deepcopy(Personagens[i + AREA_DE_BACKUP])
+а а а а а а Personagens[i].Posicao = GeraPosicaoAleatoria()
+а а а а а а ang = random.randint(0, 360)
+а а а а а а Personagens[i].Rotacao = ang
+а а а а а а Personagens[i].Direcao = Ponto(0, 1)
+а а а а а а Personagens[i].Direcao.rotacionaZ(ang)
+
+а а # Verifica colisїes de tiros do jogador com inimigos
+а а for i in range(1, nInstancias):
+а а а а if getattr(Personagens[i], "tipo", None) != "tiro":
+а а а а а а continue
+а а а а if getattr(Personagens[i], "atirador", None) != 0:
+а а а а а а continue а# Sє tiros do jogador
+
+а а а а for j in range(1, nInstancias):
+а а а а а а if i == j:
+а а а а а а а а continue
+а а а а а а if getattr(Personagens[j], "tipo", None) != "inimigo":
+а а а а а а а а continue
+
+а а а а а а if TestaColisao(i, j):
+а а а а а а а а #print(f"Inimigo {j} foi atingido pelo tiro {i}!")
+
+а а а а а а а а # Reposiciona inimigo apєs a morte
+а а а а а а а а Personagens[j] = copy.deepcopy(Personagens[j + AREA_DE_BACKUP])
+а а а а а а а а Personagens[j].Posicao = GeraPosicaoAleatoria()
+а а а а а а а а ang = random.randint(0, 360)
+а а а а а а а а Personagens[j].Rotacao = ang
+а а а а а а а а Personagens[j].Direcao = Ponto(0, 1)
+а а а а а а а а Personagens[j].Direcao.rotacionaZ(ang)
+
+а а а а а а а а # move o tiro pra fora e para de movimentar
+а а а а а а а а Personagens[i].Velocidade = 0
+а а а а а а а а Personagens[i].Posicao = Ponto(9999, 9999)
+
+а а а а а а а а break а# Um tiro mata o inimigo
+
+
+Para a criaчуo de instтncias de personagens no jogo:
+def CriaInstancias(TipoPersonagem: int):
+а а global Personagens, nInstancias
+
+а а i = TipoPersonagem
+а а ang = -90.0
+
+а а if TipoPersonagem == 0: а# Jogador da MatrizExemplo0, nave
+а а а а Personagens[i].Posicao = Ponto(-2.5, 0)
+а а а а Personagens[i].Escala = Ponto(1, 1)
+а а а а Personagens[i].Rotacao = ang
+а а а а Personagens[i].IdDoModelo = 0
+а а а а Personagens[i].Modelo = DesenhaPersonagemMatricial
+а а а а Personagens[i].Pivot = Ponto(3.5, 0)
+а а а а Personagens[i].Direcao = Ponto(0, 1)
+а а а а Personagens[i].Direcao.rotacionaZ(ang)
+а а а а Personagens[i].Velocidade = 3
+а а а а Personagens[i].tipo = "jogador" а# Tipo de jogador
+а а а а Personagens[i + AREA_DE_BACKUP] = copy.deepcopy(Personagens[i])
+а а а а nInstancias = 1 а# Inicia com 1
+
+а а else:
+а а а а Personagens[i + AREA_DE_BACKUP] = copy.deepcopy(Personagens[i])
+а а а а nInstancias += 1
+а а а а ang = random.randint(0, 90)
+а а а а if TipoPersonagem == 1: а# exemplo de tiro
+а а а а а а Personagens[nInstancias].Posicao = Ponto(13.5, 0)
+а а а а а а Personagens[nInstancias].IdDoModelo = 1
+а а а а elif TipoPersonagem == 2:
+а а а а а а Personagens[nInstancias].Posicao = GeraPosicaoAleatoria()
+а а а а а а Personagens[nInstancias].IdDoModelo = 2
+а а а а elif TipoPersonagem == 3:
+а а а а а а Personagens[nInstancias].Posicao = GeraPosicaoAleatoria()
+а а а а а а Personagens[nInstancias].IdDoModelo = 3
+а а а а elif TipoPersonagem == 4:
+а а а а а а 
+а а а а а а Personagens[nInstancias].Posicao = GeraPosicaoAleatoria()
+а а а а а а Personagens[nInstancias].IdDoModelo = 3
+а а а а 
+а а а а Personagens[nInstancias].Escala = Ponto(1, 1)
+а а а а Personagens[nInstancias].Rotacao = ang
+а а а а Personagens[nInstancias].Modelo = DesenhaPersonagemMatricial
+а а а а Personagens[nInstancias].Pivot = Ponto(3.5, 0)
+а а а а Personagens[nInstancias].Direcao = Ponto(0, 1)
+а а а а Personagens[nInstancias].Direcao.rotacionaZ(ang)
+а а а а Personagens[nInstancias].Velocidade = 3
+а а а а Personagens[nInstancias].tipo = "inimigo"
+а а а а Personagens[nInstancias + AREA_DE_BACKUP] = copy.deepcopy(Personagens[i])
+а а а а nInstancias += 1
+
+Para a mudanчa da cor do fundo de tela:
+def init():
+glClearColor(0,0,0,0)
+
+Para a criaчуo de inimigos:
+def criacaoDeInimigos():
+а а global TempoInicial
+а а tempo_decorrido = time.time() - TempoInicial
+а а 
+а а if tempo_decorrido >= random.randint(3,7):
+а а а а nroInimigo=random.randrange(2,4)
+а а а а CriaInstancias(nroInimigo)
+а а а а 
+а а а а #reseta 
+а а а а TempoInicial = time.time()
+
+Funчуo que avalia o tempo para atirar:
+def pode_atirar():
+а а global tiros_disparados, tempo_inicio
+
+а а agora = time.time()
+
+а а # se passou reseta o contador
+а а if agora - tempo_inicio > intervalo:
+а а а а tiros_disparados = 0
+а а а а tempo_inicio = agora
+
+а а # Se ainda pode atirar
+а а if tiros_disparados < limite_tiros:
+а а а а tiros_disparados += 1
+а а а а return True
+а а else:
+а а а а return False
+
+Funчуo que cria o tiro
+def CriaTiro2(nAtirador: int):
+а а if not pode_atirar():
+а а а а #print("Limite de tiros atingido. Aguarde 2 segundos")
+а а а а return
+а а 
+а а global nInstancias, Personagens, Modelos, AREA_DE_BACKUP, DesenhaPersonagemMatricial
+а а 
+а а i = nInstancias
+а а Atirador = Personagens[nAtirador]
+а а ang = Atirador.Rotacao
+
+а а Personagens[i].Escala = Ponto(1, 1)
+а а Personagens[i].Rotacao = ang
+а а Personagens[i].IdDoModelo = 1 а
+а а Personagens[i].Modelo = DesenhaPersonagemMatricial
+а а Personagens[i].Pivot = Ponto(0.5, 0)
+а а Personagens[i].Direcao = Ponto(0, 1)
+а а Personagens[i].Direcao.rotacionaZ(ang)
+
+а а envelope = Atirador.Envelope
+а а direcao = Personagens[i].Direcao
+а а pos_base = Atirador.Posicao
+
+а а # Encontra os dois pontos mais na frente do envelope na direчуo do disparo
+а а frente = sorted(envelope, key=lambda p: (p - pos_base).x * direcao.x + (p - pos_base).y * direcao.y, reverse=True)[:2]
+а а centro_frente = (frente[0] + frente[1]) * 0.5
+
+а а # Posiciona o tiro um pouco na frente da ponta do atirador
+а а Personagens[i].Posicao = centro_frente + direcao * 0.3 - Personagens[i].Pivot
+
+а а Personagens[i].Velocidade = 5
+
+а а # marca como tiro e define quem atirou
+а а Personagens[i].tipo = "tiro"
+а а Personagens[i].atirador = nAtirador
+
+а а # backup
+а а Personagens[i + AREA_DE_BACKUP] = copy.deepcopy(Personagens[i])
+
+а а nInstancias += 1
+
+Funчуo que permite os inimigos atirarem com contagem de tempo:
+def inimigosAtiram():
+а а global proximo_tiro_inimigo, intervalo_tiro_inimigo, nInstancias
+
+а а tempo_atual = time.time()
+а а if tempo_atual < proximo_tiro_inimigo:
+а а а а return
+
+а а
+а а for i in range(1, nInstancias):
+а а а а if getattr(Personagens[i], "tipo", None) == "inimigo":
+а а а а а а CriaTiro2(i) а# Inimigo atira
+
+а а # Define o prєximo tempo de disparo
+а а proximo_tiro_inimigo = tempo_atual + intervalo_tiro_inimigo
+
+
+Mщtodos que avalia e devolve o inimigo a janela caso tenha tentado sair dos limites:
+def VerificaColisaoComLimites(personagem):
+а а global Min, Max
+а а bateu = False
+
+а а # Checa colisуo horizontal
+а а if personagem.Posicao.x < Min.x or personagem.Posicao.x > Max.x:
+а а а а personagem.Direcao.x *= -1
+а а а а personagem.Posicao.x = max(Min.x, min(personagem.Posicao.x, Max.x))
+а а а а bateu = True
+
+а а # Checa colisуo vertical
+а а if personagem.Posicao.y < Min.y or personagem.Posicao.y > Max.y:
+а а а а personagem.Direcao.y *= -1
+а а а а personagem.Posicao.y = max(Min.y, min(personagem.Posicao.y, Max.y))
+а а а а bateu = True
+
+а а # Atualiza a rotaчуo do grсfico se houve colisуo
+а а if bateu:
+
+а а а а angulo = math.degrees(math.atan2(personagem.Direcao.y, personagem.Direcao.x))
+а а а а personagem.Rotacao = angulo - 90
+
+
